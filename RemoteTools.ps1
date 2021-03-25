@@ -125,7 +125,13 @@ Function Invoke-Trader {
         [string]$KeyFile,
     
         [Parameter(Mandatory=$true)]
-        [string] $Command
+        [string] $Command,
+
+        [Parameter()]
+        [switch] $StartTrader,
+
+        [Parameter()]
+        [switch] $StopTrader
     )
 
     Write-verbose ("Connecting to Trader at: {0}" -f $Hostname)
@@ -133,12 +139,28 @@ Function Invoke-Trader {
     if (Test-Connection -Count 1 $Hostname) {
         Write-Verbose "Host has been reached"
 
-        ssh -t -i $KeyFile ("{0}@{1}" -f $Username, $Hostname) $Command
+        if (!($StartTrader -or $StopTrader)) {
+            ssh -t -i $KeyFile ("{0}@{1}" -f $Username, $Hostname) $Command
+        }
+
+        if ($StartTrader -and !$StopTrader) {
+            ssh -i $KeyFile ("{0}@{1}" -f $Username, $Hostname) 'echo "FAKE: Starting Trader"'
+
+            Write-Verbose "Trader has been started"
+        }
+
+        if ($StopTrader -and !$StartTrader) {
+            ssh -i $KeyFile ("{0}@{1}" -f $Username, $Hostname) 'echo "FAKE: Stopping Trader'
+
+            Write-Verbose "Trader has been stopped"
+        }
+
     
     } Else {
         Write-Error ("Unable to reach host: {0}" -f $Hostname)
     }
 
+    Write-Verbose "Closing connection to Trader"
     # exit code true/false
     Return $?
 }
