@@ -10,19 +10,19 @@
 
 
 [CmdletBinding()]
-param(
-    [Parameter()]
-    [string]$Hostname = '54.212.9.5', #prod.nrt.brinser.subject17.net
+# param(
+#     [Parameter()]
+#     [string]$Hostname, #prod.nrt.brinser.subject17.net
 
-    [Parameter()]
-    [string]$Username = 'ec2-user',
+#     [Parameter()]
+#     [string]$Username,
 
-    [Parameter()]
-    [System.IO.Path]$KeyFile = '/home/tmckenzie/Downloads/test-ec2-key.pem',
+#     [Parameter()]
+#     [System.IO.Path]$KeyFile,
 
-    [Parameter()]
-    [System.Array] $Command
-)
+#     [Parameter()]
+#     [System.Array] $Command
+# )
 
 #Import-Module AWSPowerShell.Netcore
 $ErrorActionPreference = "Continue"
@@ -112,30 +112,42 @@ Function Invoke-RemoteCommand {
     Return $Response
 }
 
-# some stock commands
-# maybe we can have a switch statement with common stuff?
+Function Invoke-Trader {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Hostname, #prod.nrt.brinser.subject17.net
+    
+        [Parameter(Mandatory=$true)]
+        [string]$Username,
+    
+        [Parameter(Mandatory=$true)]
+        [string]$KeyFile,
+    
+        [Parameter(Mandatory=$true)]
+        [string] $Command
+    )
 
+    Write-verbose ("Connecting to Trader at: {0}" -f $Hostname)
 
-# $code_ls = @"
-# ls
-# "@
+    if (Test-Connection -Count 1 $Hostname) {
+        Write-Verbose "Host has been reached"
 
-# $code_javac = @"
-# javac Main.java
-# "@
+        ssh -t -i $KeyFile ("{0}@{1}" -f $Username, $Hostname) $Command
+    
+    } Else {
+        Write-Error ("Unable to reach host: {0}" -f $Hostname)
+    }
 
-# $ConnectionSplat = @{
-#     'Hostname' = 54.212.9.5;
-#     'UserName' = 'ec2-user';
-#     'KeyFile' = '/home/tmckenzie/Downloads/test-ec2-key.pem'
-# }
+    # exit code true/false
+    Return $?
+}
 
-# Invoke-RemoteCommand `
-# -Session $Session`
-# -Command $code_javac
+$TraderSplat = @{
+    Hostname = 'prod.nrt.brinser.subject17.net'; #'54.212.9.5'
+    UserName = 'ec2-user';
+    KeyFile = '~/Downloads/test-ec2-key.pem';
+    Command = 'python3 echo_loop.py' # modify with actual trader location
+}
 
-# Invoke-RemoteCommand `
-# -Session $Session`
-# -Command $code_ls
-
-# Stop-Session -Session $Session
+Invoke-Trader @TraderSplat
