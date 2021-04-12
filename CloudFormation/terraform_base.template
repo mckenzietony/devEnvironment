@@ -238,6 +238,18 @@ Resources:
              - autoscaling:*
             Resource:
              - "*"
+          -
+            Effect: Allow
+            Action:
+             - organizations:CreateOrganization
+             - organizations:EnableAWSServiceAccess
+             - organizations:DisableAWSServiceAccess
+             - organizations:DescribeOrganizations
+             - organizations:ListRoots
+             - organizations:ListAccounts
+             - organizations:ListAWSServiceAccessForOrganizations
+            Resource:
+             - "*"
       Roles:
         -
           !Ref EC2InstanceRoleTerra
