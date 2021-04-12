@@ -171,7 +171,7 @@ Function Deploy-Stack{
             Write-Verbose 'No updates to be performed'
         }
 
-        Wait-ForStackBuild -StackName $StackName -DesiredStatus 'Create_Complete'
+        Wait-ForStackBuild -StackName $StackName -DesiredStatus 'UPDATE_COMPLETE'
 
     } Else {
         Write-Verbose "Stack does not exist"
@@ -182,7 +182,7 @@ Function Deploy-Stack{
         $ParRegion, $ParStageName, $ParS3BucketName, $ParKeyName, $ParInstanceType, $ParServerCode `
         -capabilities 'CAPABILITY_NAMED_IAM'
 
-        Wait-ForStackBuild -StackName $StackName -DesiredStatus 'UPDATE_COMPLETE'
+        Wait-ForStackBuild -StackName $StackName -DesiredStatus 'Create_Complete'
     }
 
     # This will loop forever if the stack doesn't create perfectly.

@@ -12,7 +12,7 @@
 [CmdletBinding()]
 # param(
 #     [Parameter()]
-#     [string]$Hostname, #prod.nrt.brinser.subject17.net
+#     [string]$Hostname,
 
 #     [Parameter()]
 #     [string]$Username,
@@ -165,11 +165,12 @@ Function Invoke-Trader {
     Return $?
 }
 
+# modify with actual trader location
 $TraderSplat = @{
-    Hostname = 'prod.nrt.brinser.subject17.net'; #'54.212.9.5'
+    Hostname = 'prod.nrt.brinser.subject17.net'
     UserName = 'ec2-user';
-    KeyFile = '~/Downloads/test-ec2-key.pem';
-    Command = 'python3 echo_loop.py' # modify with actual trader location
+    KeyFile = '~/Downloads/test-trader-nrt.pem';
+    Command = 'java -cp volatility-1.0-SNAPSHOT-jar-with-dependencies.jar LauncherKt' 
 }
 
 Invoke-Trader @TraderSplat

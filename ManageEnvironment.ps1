@@ -18,7 +18,7 @@
 [CmdletBinding()]
 param(
     [Parameter()]
-    [string]$Region = 'us-west-2',
+    [string]$Region = 'ap-northeast-1',
 
     [Parameter()]
     [string]$Stage = 'test',
@@ -27,25 +27,25 @@ param(
     [string]$StackName = 'controlplane',
 
     [Parameter()]
-    [string]$S3BucketName = 'test-us-west-2-controlplane-code',
+    [string]$S3BucketName = 'test-trader-code-bucket-666',
 
     # Key must already exist in ec2 keystore!!!
     # If it doesn't go create it now
     [Parameter()]
-    [string]$SSHKeyName = 'test-ec2-key',
+    [string]$SSHKeyName = 'test-trader-nrt',
 
     [Parameter()]
-    [string]$InstanceType = 't2.micro',
+    [string]$InstanceType = 'm5.2xlarge',
 
     [Parameter()]
     [string]$Template = "CFN/CFN.template",
 
     [Parameter()]
-    [String]$ServerCode = "Main.java",
+    [String]$ServerCode = "echo_loop.py",
 
     [Parameter(Mandatory)]
     [ValidateSet("Create", "Update", "Remove")]
-    [String[]]$CFNTask
+    [String]$CFNTask
 )
 
 Import-Module AWSPowerShell.NetCore
@@ -75,9 +75,10 @@ If (($CFNTask -eq "Create") -or ($CFNTask -eq "Update")) {
     Write-Verbose "Stack is up"
 
     # Basic code uploader
-    Invoke-S3CodeUploader -ServerCode $ServerCode -S3BucketName $S3BucketName
-}
+    #Invoke-S3CodeUploader -ServerCode $ServerCode -S3BucketName $S3BucketName
 
+    Write-Verbose ("Uploaded: {0} to {1}" -f $ServerCode, $S3BucketName)
+}
 
 # YOU MUST MANUALLY REMOVE ANY FILES FROM THE S3 BUCKET OR THE RESOURCE WILL NOT BE REMOVED
 If ($CFNTask -eq "Remove") {
@@ -87,4 +88,4 @@ If ($CFNTask -eq "Remove") {
     Write-Verbose "Stack is removed"
 }
 
-Write-Verbose "complete"
+Write-Verbose "Complete"

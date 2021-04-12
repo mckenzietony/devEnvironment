@@ -2,13 +2,13 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   Region:
     Type: String
-    Default: us-west-2
+    Default: ap-northeast-1
   Stage:
     Type: String
     Default: Test
   S3BucketName:
     Type: String
-    Default: test-code-bucket-12345
+    Default: test-trader-code-bucket-666
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
     Default: "test-ec2-key"
@@ -17,13 +17,15 @@ Parameters:
     Type: String
     Default: t2.micro
   ServerCode:
-    Description: "Code which you want to be downloaded and run on the server"
+    Description: "Code which you want to be downloaded and run on the server - not used"
     Type: String
 
 Mappings:
   RegionMap:
     us-west-2:
       AMI: "ami-00f9f4069d04c0c6e"
+    ap-northeast-1:
+      AMI: "ami-0bc8ae3ec8e338cbc"
 
 Resources:
   VPC:
@@ -34,7 +36,7 @@ Resources:
       EnableDnsHostnames: true
       Tags:
       - Key: Name
-        Value:  !Join ['', [!Ref "AWS::StackName", "-VPC" ]]   
+        Value:  !Join ['', [!Ref "AWS::StackName", "-VPC" ]]
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -161,29 +163,64 @@ Resources:
         Value:  !Join ['', [!Ref "AWS::StackName", "-EC2" ]]
       UserData:
         Fn::Base64: !Sub |
-            #!/bin/bash -xe
+            #!/bin/bash
 
-            sudo amazon-linux-extras install java-openjdk11 -y &&
-            sudo yum install java-1.8.0-openjdk -y &&
-            sudo yum install java-devel &&
+            yum update -y
+
+            # Install Java
+            yum install java-openjdk11 -y
+            yum install java-1.8.0-openjdk -y
+            yum install java-devel -y
+
+            # Install Python
+            yum install python3.x86_64 -y
 
             # Register the Microsoft RedHat repository
-            curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo &&
+            curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
 
             # Install PowerShell
-            sudo yum install -y powershell &&
+            yum install powershell -y
+
+            ## install Tesseract
+            yum install autoconf aclocal automake -y
+            yum install libtool -y
+            yum install libjpeg-devel libpng-devel libtiff-devel zlib-devel -y
+
+            wget http://www.leptonica.org/source/leptonica-1.80.0.tar.gz
+            tar -zxvf leptonica-1.80.0.tar.gz
+            cd leptonica-1.80.0
+            ./configure
+            make
+            make install
+
+            echo $LD_LIBRARY_PATH
+            export LD_LIBRARY_PATH=/usr/local/lib
+
+            wget https://github.com/tesseract-ocr/tesseract/archive/4.1.1.tar.gz
+            tar -zxvf 4.1.1.tar.gz
+            cd tesseract-4.1.1/
+            ./autogen.sh
+
+            export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+            ./configure
+            make
+            make install
+
+            # install telethon
+            sudo pip3 install --user telethon
 
             # Allow access using powershell
-            sudo echo "  " >> /etc/ssh/sshd_config &&
-            sudo echo "# Powershell Subsystem -- Allow pwsh remoting" >> /etc/ssh/sshd_config &&
-            sudo echo "Subsystem powershell /usr/bin/pwsh -sshs -NoLogo" >> /etc/ssh/sshd_config &&
-            sudo echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKGKbJ6HuDz5iiY24qi1vCx8lMI9/xmeJrR9kqLCINip james@cantor" >> /home/ec2_user/.ssh/authorized_keys
-            sudo echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN14jrYs34pNoRW13wTIBCsU0HNvnJuZhyi5SY4DZmmq james@galois" >> /home/ec2_user/.ssh/authorized_keys
-            sudo systemctl restart sshd &&
+            echo "  " >> /etc/ssh/sshd_config
+            echo "# Powershell Subsystem -- Allow pwsh remoting" >> /etc/ssh/sshd_config
+            echo "Subsystem powershell /usr/bin/pwsh -sshs -NoLogo" >> /etc/ssh/sshd_config
+            systemctl restart sshd &&
 
             # copy down some code
-            aws s3 cp s3://test-us-west-2-controlplane-code/Main.java /home/ec2-user/Main.java &&
-            /usr/bin/javac Main.java
+            #aws s3 cp s3://test-us-west-2-controlplane-code/Main.java /home/ec2-user/echo_loop.py
+            #aws s3 cp s3://test-trader-code-bucket-666/echo_loop.py /home/ec2-user/echo_loop.py
+            aws s3 cp s3://test-trader-code-bucket-666/volatility-1.0-SNAPSHOT-jar-with-dependencies.jar /home/ec2-user/volatility-1.0-SNAPSHOT-jar-with-dependencies.jar
+
+            #/usr/bin/python3 /home/ec2-user/echo_loop.py
 
   S3CodeBucket:
     Type: AWS::S3::Bucket
