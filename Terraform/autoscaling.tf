@@ -4,6 +4,7 @@ resource "aws_launch_configuration" "ecs_launch_config" {
   security_groups      = [aws_security_group.ecs_sg.id]
   user_data            = "#!/bin/bash\\ ECS_CLUSTER=trader-bois >> /etc/ecs/ecs.config"
   instance_type        = "m5zn.large"
+  key_name             = "test-trader-nrt"
 }
 
 resource "aws_autoscaling_group" "ecs_asg" {
