@@ -38,7 +38,7 @@ param(
     [string]$InstanceType = 'm5.2xlarge',
 
     [Parameter()]
-    [string]$Template = "CFN/CFN.template",
+    [string]$Template = "CloudFormation/DayOne.template",
 
     [Parameter()]
     [String]$ServerCode = "echo_loop.py",
