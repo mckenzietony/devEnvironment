@@ -13,8 +13,3 @@ terraform {
     dynamodb_table = "terrabase-DDBTerraProdState-14R1535JG3ONY"
   }
 }
-
-provider "aws" {
-  profile = "default"
-  region  = "ap-northeast-1"
-}

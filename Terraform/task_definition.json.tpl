@@ -1,7 +1,7 @@
 [
     {
         "essential": true,
-        "memory": 512,
+        "memory": 4096,
         "name": "worker",
         "cpu": 2,
         "image": "${REPOSITORY_URL}:latest",
