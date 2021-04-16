@@ -331,7 +331,7 @@ Resources:
             echo "  " >> /etc/ssh/sshd_config
             echo "# Powershell Subsystem -- Allow pwsh remoting" >> /etc/ssh/sshd_config
             echo "Subsystem powershell /usr/bin/pwsh -sshs -NoLogo" >> /etc/ssh/sshd_config
-            systemctl restart sshd &&
+            systemctl restart sshd
 
   S3TerraProdConfigBucket:
     Type: AWS::S3::Bucket
