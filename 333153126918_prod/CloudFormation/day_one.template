@@ -1,0 +1,236 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  Region:
+    Type: String
+    Default: ap-northeast-1
+  Stage:
+    Type: String
+    Default: Test
+  S3BucketName:
+    Type: String
+    Default: test-trader-code-bucket-666
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: "test-ec2-key"
+  InstanceType:
+    Description: "EC2 instance type"
+    Type: String
+    Default: t2.micro
+  ServerCode:
+    Description: "Code which you want to be downloaded and run on the server - not used"
+    Type: String
+
+Mappings:
+  RegionMap:
+    us-west-2:
+      AMI: "ami-00f9f4069d04c0c6e"
+    ap-northeast-1:
+      AMI: "ami-0bc8ae3ec8e338cbc"
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.1.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value:  !Join ['', [!Ref "AWS::StackName", "-VPC" ]]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: VPC
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.10.0/24
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref "AWS::Region"
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Public-A
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: Public
+
+  PublicRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+
+  EC2SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: "As it says on the tin"
+      GroupName: !Sub ${AWS::StackName}-SG-SSH
+      SecurityGroupIngress: 
+        FromPort: 22
+        ToPort: 22
+        IpProtocol: tcp
+        CidrIp: 0.0.0.0/0
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-SG-SSH
+      VpcId: !Ref VPC
+
+  IAMInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName:  !Sub ${AWS::StackName}-ec2-instance-profile
+      Path: /
+      Roles: 
+       - !Ref EC2InstanceRole
+
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    DependsOn: S3CodeBucket
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-ec2-instance-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+
+  IAMInstanceS3Policy:
+    Type: AWS::IAM::Policy
+    DependsOn: EC2InstanceRole    
+    Properties:
+      PolicyName: !Sub ${AWS::StackName}-s3-policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:*
+            Resource:
+              - !Join ['', ["arn:aws:s3:::", !Ref S3BucketName]]
+              - !Join ['', ["arn:aws:s3:::", !Ref S3BucketName, "/*"]]
+      Roles:
+        -
+          !Ref EC2InstanceRole
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    DependsOn: EC2InstanceRole
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref IAMInstanceProfile
+      InstanceType: !Ref InstanceType
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          GroupSet: 
+            - !Ref EC2SSHSecurityGroup
+          SubnetId: !Ref PublicSubnetA
+      Tags: 
+      - Key: Name
+        Value:  !Join ['', [!Ref "AWS::StackName", "-EC2" ]]
+      UserData:
+        Fn::Base64: !Sub |
+            #!/bin/bash
+
+            yum update -y
+
+            # Install Java
+            yum install java-openjdk11 -y
+            yum install java-1.8.0-openjdk -y
+            yum install java-devel -y
+
+            # Install Python
+            yum install python3.x86_64 -y
+
+            # Register the Microsoft RedHat repository
+            curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
+
+            # Install PowerShell
+            yum install powershell -y
+
+            ## install Tesseract
+            yum install autoconf aclocal automake -y
+            yum install libtool -y
+            yum install libjpeg-devel libpng-devel libtiff-devel zlib-devel -y
+
+            wget http://www.leptonica.org/source/leptonica-1.80.0.tar.gz
+            tar -zxvf leptonica-1.80.0.tar.gz
+            cd leptonica-1.80.0
+            ./configure
+            make
+            make install
+
+            echo $LD_LIBRARY_PATH
+            export LD_LIBRARY_PATH=/usr/local/lib
+
+            wget https://github.com/tesseract-ocr/tesseract/archive/4.1.1.tar.gz
+            tar -zxvf 4.1.1.tar.gz
+            cd tesseract-4.1.1/
+            ./autogen.sh
+
+            export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+            ./configure
+            make
+            make install
+
+            # install telethon
+            sudo pip3 install --user telethon
+
+            # Allow access using powershell
+            echo "  " >> /etc/ssh/sshd_config
+            echo "# Powershell Subsystem -- Allow pwsh remoting" >> /etc/ssh/sshd_config
+            echo "Subsystem powershell /usr/bin/pwsh -sshs -NoLogo" >> /etc/ssh/sshd_config
+            systemctl restart sshd &&
+
+            # copy down some code
+            #aws s3 cp s3://test-us-west-2-controlplane-code/Main.java /home/ec2-user/echo_loop.py
+            #aws s3 cp s3://test-trader-code-bucket-666/echo_loop.py /home/ec2-user/echo_loop.py
+            aws s3 cp s3://test-trader-code-bucket-666/volatility-1.0-SNAPSHOT-jar-with-dependencies.jar /home/ec2-user/volatility-1.0-SNAPSHOT-jar-with-dependencies.jar
+
+            #/usr/bin/python3 /home/ec2-user/echo_loop.py
+
+  S3CodeBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketName
+
+Outputs:
+  VPC:
+    Description: VPC ID
+    Value: !Ref VPC
+  EC2Instance:
+    Description: EC2 instance for testing java
+    Value: !Ref EC2Instance

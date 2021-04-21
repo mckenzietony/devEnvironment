@@ -5,7 +5,7 @@ Parameters:
     Default: ap-northeast-1
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
-    Default: "test-trader-nrt"
+    Default: "prod-trader-nrt"
 
 Mappings:
   RegionMap:

@@ -7,9 +7,9 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "terrabase-s3terraprodconfigbucket-1kxk4dgv2jtah"
+    bucket         = "terrabase-s3terraprodconfigbucket-ie003rpyxgzx"
     key            = "terraform.tfstate"
     region         = "ap-northeast-1"
-    dynamodb_table = "terrabase-DDBTerraProdState-14R1535JG3ONY"
+    dynamodb_table = "terrabase-DDBTerraProdState-FAGXHWYKM2AE"
   }
 }
