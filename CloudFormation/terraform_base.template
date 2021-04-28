@@ -281,6 +281,18 @@ Resources:
             yum update -y
             yum install -y yum-utils
 
+            # Register the Microsoft RedHat repository
+            curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
+
+            # Install PowerShell
+            yum install powershell -y
+
+            # Allow access using powershell
+            echo "  " >> /etc/ssh/sshd_config
+            echo "# Powershell Subsystem -- Allow pwsh remoting" >> /etc/ssh/sshd_config
+            echo "Subsystem powershell /usr/bin/pwsh -sshs -NoLogo" >> /etc/ssh/sshd_config
+            systemctl restart sshd
+
             # Install terraform
             yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
             yum -y install terraform
@@ -288,11 +300,11 @@ Resources:
             # terraform cli autocomplete
             terraform -install-autocomplete
 
-            # main.tf configuration can go here
-            # auto gen or base64 should work
-
             # initialize terraform
             terraform init
+
+            # we can automate the pull of terraform templates here in the future
+            # possibly pull from s3 or git
 
   EC2BastionInstance:
     Type: AWS::EC2::Instance

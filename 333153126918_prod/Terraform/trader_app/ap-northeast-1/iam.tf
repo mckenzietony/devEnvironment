@@ -19,7 +19,7 @@ resource "aws_iam_role_policy_attachment" "ecs_agent" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
-# amazonecs_fullaccess needs to be attached - syntax might need correcting
+# amazonecs_fullaccess needs to be attached
 resource "aws_iam_role_policy_attachment" "ecs_agent" {
   role       = aws_iam_role.ecs_agent.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECS_FullAccess"
