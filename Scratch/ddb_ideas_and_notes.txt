@@ -1,0 +1,45 @@
+❯ aws dynamodb scan --table-name 'terrabase-DDBSSHProdPubKeyStore-1S1NWLG9ZFSDP' --profile tony |jq .Items |jq '.[]'
+{
+  "SSHKeyName": {
+    "S": "james"
+  },
+  "SSHKeyValue": {
+    "S": "waffle"
+  }
+}
+{
+  "SSHKeyName": {
+    "S": "tony"
+  },
+  "SSHKeyValue": {
+    "S": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICOt4ZBM8uAg7SkVj4h6iw4dsSPRaC4bg+cm48M4hVmr tmckenzie@vesuvius"
+  }
+}
+
+❯ aws dynamodb scan --table-name 'terrabase-DDBSSHProdPubKeyStore-1S1NWLG9ZFSDP' --profile tony |jq .Items |jq '.[0]'
+{
+  "SSHKeyName": {
+    "S": "james"
+  },
+  "SSHKeyValue": {
+    "S": "waffle"
+  }
+}
+
+❯ aws dynamodb scan --table-name 'terrabase-DDBSSHProdPubKeyStore-1S1NWLG9ZFSDP' --profile tony |jq .Items |jq '.[1]'
+{
+  "SSHKeyName": {
+    "S": "tony"
+  },
+  "SSHKeyValue": {
+    "S": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICOt4ZBM8uAg7SkVj4h6iw4dsSPRaC4bg+cm48M4hVmr tmckenzie@vesuvius"
+  }
+}
+
+
+❯ echo $(aws dynamodb scan --table-name 'terrabase-DDBSSHProdPubKeyStore-162YB4PW3ZDLK' --profile tony |jq .Items |jq '.[1].SSHKeyValue[]')
+> test.txt
+
+
+DDBKeys=$(aws dynamodb scan --table-name 'terrabase-DDBSSHProdPubKeyStore-162YB4PW3ZDLK' --region ap-northeast-1 |jq .Items |jq '.[].SSHKeyValue[]')
+echo $DDBKeys | sed "s/^\([\"']\)\(.*\)\1\$/\2/g" >> /home/ec2-user/.ssh/authorized_keys

@@ -4,8 +4,20 @@ data "aws_iam_policy_document" "ecs_agent" {
 
     principals {
       type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
+      identifiers = [
+      "ec2.amazonaws.com",
+      "ecs-tasks.amazonaws.com"]
     }
+  }
+  statement {
+    actions = [
+      "ssm:*",
+      "s3:*"
+    ]
+
+    resources = [
+      "*",
+    ]
   }
 }
 

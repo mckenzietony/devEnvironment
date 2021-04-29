@@ -238,7 +238,17 @@ Resources:
              - autoscaling:*
             Resource:
              - "*"
-          -
+          - 
+            Effect: Allow
+            Action:
+             - ssm:PutParameter
+             - ssm:GetParameter
+             - ssm:AddTagsToResource
+             - ssm:AddTagsToResource
+             - ssm:RemoveTagsFromResource
+            Resource:
+             - "*"
+          -            
             Effect: Allow
             Action:
              - organizations:CreateOrganization
@@ -366,6 +376,28 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5 
 
+  DDBSSHProdPubKeyStore:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: SSHKeyName
+          AttributeType: S
+        - 
+          AttributeName: SSHKeyValue
+          AttributeType: S          
+      KeySchema:
+        - 
+          AttributeName: SSHKeyName
+          KeyType: HASH
+        - 
+          AttributeName: SSHKeyValue
+          KeyType: RANGE
+
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5 
+
 Outputs:
   VPC:
     Description: VPC ID
@@ -379,6 +411,9 @@ Outputs:
   TerraformStateDBProd:
     Description: State locking db
     Value: !Ref DDBTerraProdState
+  DDBSSHPubKeyStoreProd:
+    Description: Store public ssh keys - Don't be a jackass and put private keys in here
+    Value: !Ref DDBSSHProdPubKeyStore
   TerraformStateS3Prod:
     Description: Contains s3 state data
     Value: !Ref S3TerraProdConfigBucket
