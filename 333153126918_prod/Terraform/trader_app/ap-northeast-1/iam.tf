@@ -9,15 +9,16 @@ data "aws_iam_policy_document" "ecs_agent" {
       "ecs-tasks.amazonaws.com"]
     }
   }
+
   statement {
     actions = [
       "ssm:*",
-      "s3:*"
+      "s3:*",
+      "secretsmanager:*",
+      "kms:*"
     ]
 
-    resources = [
-      "*",
-    ]
+    resources = [ "*" ]
   }
 }
 
