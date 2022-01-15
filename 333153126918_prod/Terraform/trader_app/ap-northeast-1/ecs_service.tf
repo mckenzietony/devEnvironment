@@ -6,8 +6,7 @@ resource "aws_ecs_service" "worker" {
   network_configuration {
     subnets = [
       aws_subnet.pub_subnet_a.id, 
-      aws_subnet.pub_subnet_c.id,
-      aws_subnet.pub_subnet_d.id,
+      aws_subnet.pub_subnet_c.id
     ]
   }
 }
