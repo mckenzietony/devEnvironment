@@ -4,21 +4,8 @@ data "aws_iam_policy_document" "ecs_agent" {
 
     principals {
       type        = "Service"
-      identifiers = [
-      "ec2.amazonaws.com",
-      "ecs-tasks.amazonaws.com"]
+      identifiers = ["ec2.amazonaws.com", "ecs-tasks.amazonaws.com"]
     }
-  }
-
-  statement {
-    actions = [
-      "ssm:*",
-      "s3:*",
-      "secretsmanager:*",
-      "kms:*"
-    ]
-
-    resources = [ "*" ]
   }
 }
 
@@ -30,12 +17,6 @@ resource "aws_iam_role" "ecs_agent" {
 resource "aws_iam_role_policy_attachment" "ecs_agent" {
   role       = aws_iam_role.ecs_agent.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-}
-
-# amazonecs_fullaccess needs to be attached
-resource "aws_iam_role_policy_attachment" "ecs_agent" {
-  role       = aws_iam_role.ecs_agent.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECS_FullAccess"
 }
 
 resource "aws_iam_instance_profile" "ecs_agent" {

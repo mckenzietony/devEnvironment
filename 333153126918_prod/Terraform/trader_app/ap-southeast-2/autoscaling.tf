@@ -14,7 +14,7 @@ resource "aws_autoscaling_group" "ecs_asg" {
 
   desired_capacity          = 0
   min_size                  = 0
-  max_size                  = 1
+  max_size                  = 0
   health_check_grace_period = 300
   health_check_type         = "EC2"
 }
