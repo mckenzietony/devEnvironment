@@ -1,0 +1,78 @@
+FROM amazoncorretto:15
+WORKDIR /home/ec2-user/dockme
+RUN ls -lAh
+RUN yum update -y \
+&& yum install -y autoconf aclocal automake make \
+&& yum install -y libtool \
+&& yum install -y libjpeg-devel libpng-devel libtiff-devel zlib-devel \
+&& yum install -y wget file gzip awscli vim iotop htop
+
+
+RUN wget http://www.leptonica.org/source/leptonica-1.80.0.tar.gz \
+&& tar -zxvf leptonica-1.80.0.tar.gz  --no-same-owner
+WORKDIR /home/ec2-user/dockme/leptonica-1.80.0
+RUN ./configure #MAKE=gmake --disable-dependency-tracking
+RUN make
+RUN make install
+WORKDIR /home/ec2-user/dockme
+
+
+RUN wget https://github.com/tesseract-ocr/tesseract/archive/4.1.1.tar.gz \
+&& tar -zxvf 4.1.1.tar.gz  --no-same-owner
+WORKDIR /home/ec2-user/dockme/tesseract-4.1.1
+RUN yum install -y gcc-c++
+RUN LD_LIBRARY_PATH=/usr/local/lib ./autogen.sh
+
+#RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+RUN PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH ./configure
+RUN PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH make
+RUN PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH make install
+WORKDIR /home/ec2-user/dockme
+
+
+#RUN yum install python
+RUN yum install -y python3.x86_64
+# install telethon
+COPY pip_requirements.txt .
+RUN pip3 install -r pip_requirements.txt
+#RUN PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH pip3 install recordclass==0.13.2
+#RUN pip3 install asgiref # for easy async to sync conversion
+#RUN yum install -y openssh
+#RUN mkdir -p /home/ec2-user/.ssh
+#RUN echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN14jrYs34pNoRW13wTIBCsU0HNvnJuZhyi5SY4DZmmq james@galois" >> /home/ec2-user/.ssh/authorized_keys
+#RUN chmod 400 /home/ec2-user/.ssh/authorized_keys
+# Install our files
+RUN yum install -y xorg-x11-server-Xvfb which \
+&& yum install -y libXext.x86_64 \
+&& yum install -y libXrender.x86_64 \
+&& yum install -y libXtst.x86_64
+
+# Utilities
+# copy over volatility-arbitrage
+COPY gradlew .
+#COPY build.gradle.kts .
+COPY build.gradle .
+COPY settings.gradle .
+COPY gradle ./gradle
+COPY src src 
+COPY data ./data 
+COPY orderbooks ./orderbooks 
+COPY events ./events 
+COPY scripts ./scripts 
+COPY configs ./configs 
+RUN ./gradlew build -x test
+RUN ./gradlew shadowJar -x test
+RUN rm *.session* || echo "did not find a session file to remove"
+RUN rm src/main/python/*.session* || echo "did not find a session file to remove"
+#RUN MAVEN_OPTS=-Xss256M mvn package
+
+# LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH  PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH java -cp ./target/volatility-1.0-SNAPSHOT-jar-with-dependencies.jar LauncherKt
+#CMD mvn compile && mvn exec:java -Dexec.mainClass="LauncherKt"
+# ENTRYPOINT LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH  PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH  /usr/bin/xvfb-run -a java -cp ./target/volatility-1.0-SNAPSHOT-jar-with-dependencies.jar LauncherKt
+ENTRYPOINT ["/bin/bash"]
+CMD ["/home/ec2-user/dockme/scripts/entry_point.sh"]
+##COPY hijamesie /home/ec2-user/dockme/hijamesie-output.txt
+#
+##COPY . .
+##EXPOSE 3000 // need to expose ssh I suppose
+##CMD ["npm", "start"]
