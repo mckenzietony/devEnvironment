@@ -2,27 +2,28 @@
 
 ## Deploy terraform_base.template to cloudformation
 
-Once deployed, update backend.tf with the appropriate S3 and ddb table names
-Copy the updated backend.tf to the newly created terraform ec2 instance
-run terraform apply to set the terraform state configs
+* Once deployed, update backend.tf with the appropriate S3 and ddb table names
+* Copy the updated backend.tf to the newly created terraform ec2 instance
+* run terraform apply to set the terraform state configs
 
 ## Regional configs
 
-Copy the regional configs (ap-northeast-1/*) to the terraform instance (potentially new folder)
-run terraform apply to build out the aws environment
+* Copy the regional configs (ap-northeast-1/*) to the terraform instance (potentially new folder)
+* run terraform apply to build out the aws environment
 
 ## Create codepipeline
 
 TODO: create codepipeline terraform template
-Create code pipeline
-use buildspec.yml to define build process
+
+* Create code pipeline
+* use buildspec.yml to define build process
 
 Create and publish docker image
  create that shit
 
 ## modify autoscaling.tf with desired scaling group size
 
-terraform apply the shiz
+* terraform apply the shiz
 
 ## Ignore the below as it is being deprecated
 
