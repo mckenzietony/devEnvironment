@@ -1,5 +1,7 @@
 # Steps for deployment (in progress) - init
 
+![alt text](https://github.com/mckenzietony/devEnvironment/blob/main/Scratch/todo_notes.jpeg)
+
 ## Deploy terraform_base.template to cloudformation
 
 * Once deployed, update backend.tf with the appropriate S3 and ddb table names
