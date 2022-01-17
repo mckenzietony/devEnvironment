@@ -1,0 +1,9 @@
+##### pip install requirements #####
+##### without versions #############
+telethon
+aioconsole
+pyrogram
+tgcrypto
+
+##### with versions ################
+# bigpissyboi == 0.6.9
